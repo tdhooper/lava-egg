@@ -7,6 +7,7 @@ const glm = require('gl-matrix');
 const mat4 = glm.mat4;
 const mat3 = glm.mat3;
 const vec3 = glm.vec3;
+const quat = glm.quat;
 const bunny = require('bunny')
 const fit = require('canvas-fit')
 const normals = require('angle-normals');
@@ -42,6 +43,8 @@ image.onload = function() {
     });
 };
 
+const rotation = quat.create();
+const translation = vec3.create();
 const model = mat4.create();
 const modelInverse = mat4.create();
 const modelView = mat4.create();
@@ -73,7 +76,9 @@ const setupScene = regl({
         0.01,
         1000),
     model: (context) => {
-      return mat4.fromYRotation(model, context.tick * .01);
+      quat.fromEuler(rotation, 0, context.tick* .5, 0);
+      vec3.set(translation, 0, Math.sin(context.tick * .025) * .1, 0);
+      return mat4.fromRotationTranslation(model, rotation, translation);
     },
     view: () => camera.view(),
   },
