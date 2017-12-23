@@ -10,6 +10,7 @@ const bunny = require('bunny')
 const fit = require('canvas-fit')
 const normals = require('angle-normals');
 const icosphere = require('icosphere');
+const box = require('geo-3d-box');
 
 const canvas = document.body.appendChild(document.createElement('canvas'))
 const regl = require('regl')({
@@ -21,8 +22,9 @@ window.addEventListener('resize', fit(canvas), false)
 
 camera.distance = 2;
 
-const mesh = icosphere(0);
+// const mesh = icosphere(0);
 // const mesh = bunny;
+const mesh = box({size: 1, segments: 1});
 
 var texture = regl.texture();
 
