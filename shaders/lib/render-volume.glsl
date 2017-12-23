@@ -47,7 +47,7 @@ float SpiralNoiseC(vec3 p, vec4 id) {
 float mapVolume(vec3 p, vec4 id) {
     //p += iGlobalTime;
 
-    p *= 8.;
+    p *= 4.;
 
     pR(p.yz, -.5);
     pR(p.xz, .3);
@@ -69,7 +69,7 @@ float mapVolume(vec3 p, vec4 id) {
     float surfaceFeq = 8.5;
     float surfaceNoise = pn(p * surfaceFeq) * surfaceAmp;
     float d = k*(.5 + SpiralNoiseC(p.zxy*.4132+333., id)*3. + surfaceNoise);
-    return d / 8.;
+    return d / 4.;
     //return max(d, -limit);
 }
 
