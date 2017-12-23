@@ -24,6 +24,20 @@ camera.distance = 2;
 const mesh = icosphere(0);
 // const mesh = bunny;
 
+var texture = regl.texture();
+
+var image = new Image();
+image.src = '/images/noise.png';
+image.onload = function() {
+    texture({
+        data: image,
+        mag: 'linear',
+        min: 'mipmap',
+        wrapS: 'repeat',
+        wrapT: 'repeat'
+    });
+};
+
 const cameraPosition = vec3.create();
 
 const backfaceDistances = regl.framebuffer({
@@ -72,7 +86,8 @@ const drawScene = regl({
       backfaceDistances: backfaceDistances,
       resolution: function(context, props) {
         return [context.viewportWidth, context.viewportHeight];
-      }
+      },
+      iChannel0: texture
     }
 });
 

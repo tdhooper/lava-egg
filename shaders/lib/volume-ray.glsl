@@ -5,11 +5,11 @@ void volumeRay(
     in float backfaceDistance,
     out vec3 rayOrigin,
     out vec3 rayDirection,
-    out float maxDist
+    out float maxDistance
 ) {
     rayOrigin = position;
     rayDirection = normalize(position - cameraPosition);
-    maxDist = backfaceDistance - length(position - cameraPosition);
+    maxDistance = backfaceDistance - length(position - cameraPosition);
 }
 
 #pragma glslify: export(volumeRay)
