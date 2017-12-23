@@ -3,6 +3,7 @@ precision mediump float;
 uniform sampler2D backfaceDistances;
 uniform vec2 resolution;
 uniform vec3 cameraPosition;
+uniform mat4 modelInverse;
 uniform sampler2D iChannel0;
 varying vec3 vPosition;
 varying vec3 vNormal;
@@ -19,6 +20,7 @@ void main () {
     float maxDistance;
 
     volumeRay(
+        modelInverse,
         vPosition,
         cameraPosition,
         backfaceDistance,

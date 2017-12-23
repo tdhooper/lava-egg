@@ -43,6 +43,7 @@ image.onload = function() {
 };
 
 const model = mat4.create();
+const modelInverse = mat4.create();
 const modelView = mat4.create();
 const cameraPosition = vec3.create();
 const normal = mat3.create();
@@ -80,6 +81,9 @@ const setupScene = regl({
     proj: regl.context('proj'),
     model: regl.context('model'),
     view: regl.context('view'),
+    modelInverse: (context) => {
+      return mat4.invert(modelInverse, context.model);
+    },
     normalMatrix: (context) => {
       mat4.multiply(modelView, context.model, context.view);
       mat3.fromMat4(normal, modelView);
