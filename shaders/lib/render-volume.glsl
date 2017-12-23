@@ -122,104 +122,46 @@ float cubicPulse( float c, float w, float x )
 //-------------------------------------------------------------------------------------
 // Based on "Type 2 Supernova" by Duke (https://www.shadertoy.com/view/lsyXDK) 
 //-------------------------------------------------------------------------------------
-vec4 renderSuperstructure(vec3 ro, vec3 rd, float max_dist, const vec4 id) {
+vec4 renderSuperstructure(vec3 ro, vec3 rd, float maxDist, const vec4 id) {
 
-    float iGlobalTime = 1.;
-
-    float ld, td=0., w, d, t, noi, lDist, a,         
-          rRef = 2.*id.x,
-          h = .05+.25*id.z;
+    float td = 0.;
+    float dist;
+    float currentDist = 0.;
+    float attenuate;
+    float thickness = .05 + .25 * id.z;
    
-    vec3 pos, lightColor;   
+    vec3 pos;
+    vec3 lightColor = vec3(.2,.5,1.);
     vec4 sum = vec4(0);
     
-    lDist = 0.;
+    currentDist = 0.;
 
-    float alphaMultiplier = .0;
-    
-    float clipNear = 8. * (sin(iGlobalTime * 3.) * .5 + .5);
-    clipNear = 0.;
-    float clipFar = mix(8., 15., sin(iGlobalTime/2.) *.5 + .5);
-    clipFar = max_dist;
-    float clipBlend = (clipFar - clipNear) / 2.;
+    for (int i = 0; i < 200; i++) {
 
-    //t = .3*hash(vec3(hash(rd))); 
-    t = clipNear;
+        if (sum.a > .99 || currentDist > maxDist) break;
 
-    for (int i=0; i<200; i++)  {
-        // Loop break conditions.
-        if(/*td>.9 ||  */sum.a > .99 || t>max_dist) break;
-        
-        if (t > clipFar) {
-            break;
-        } 
-        
-        // Color attenuation according to distance
-        a = smoothstep(max_dist,0.,t);
+        vec3 pos = ro + currentDist * rd;
 
-        vec3 pos = ro + t*rd;
-        vec3 ppos = pos;
+        dist = abs(mapVolume(pos, id)) + .07;
 
-        // Evaluate distance function
-        d = abs(mapVolume(pos, id))+.07;
-        
-        // Light calculations
-        float lightRepeat = 5.;
-        float lightOffset = lightRepeat / 2.;
-        //pR(pos.xz, iGlobalTime);
-        //pos += iGlobalTime;
-        pos = mod(pos + lightOffset, lightRepeat);
-        lDist = length(pos - lightOffset);
-        //lDist = max(lDist, .001); // TODO add random offset
-        //lDist = max(length(pos) - lightOffset, .001); // TODO add random offset
-        
-        pos = ppos;
+        // Fade out light towards back
+        attenuate = smoothstep(maxDist, 0., currentDist);
 
-        noi = pn(0.03*pos);
-        lightColor = mix(hsv2rgb(noi,.5,.6), 
-                         hsv2rgb(noi+.3,.5,.6), 
-                         smoothstep(rRef*.5,rRef*2.,lDist));
-       
-        float lightBlend = sin(-lDist * lightRepeat * .2 + .0) * .5 + .5; 
-//        lightColor = mix(vec3(.3,.1,1), vec3(1.,.2,.7), lightBlend);
-        lightColor = nebulaPal(lightBlend);
+        sum.rgb += attenuate * lightColor * .024;
+        sum.a += .02;
 
-        alphaMultiplier = cubicPulse(clipNear + clipBlend, clipBlend, t);
-        alphaMultiplier *= 1.2;
-
-        //if (t > 10.) {
-            sum.rgb += (a * lightColor * .02) * alphaMultiplier;
-            //float contrib = .002 * lDist;
-            //sum += vec4(vec3(contrib), .02 * alphaMultiplier);
-            sum.a += .017 * alphaMultiplier;
-        //}
-
-        if (d<h) {
-            td += (1.-td)*(h-d)+.005;  // accumulate density
-            sum.rgb += sum.a * sum.rgb * .1 / lDist;  // emission   
-            sum += (1.-sum.a)*.02*td*a;  // uniform scale density + alpha blend in contribution 
+        if (dist < thickness) {
+            td += (1. - td) * (thickness - dist) + .005;  // accumulate density
+            sum.rgb += sum.a * sum.rgb * .1;  // emission
+            sum += (1. - sum.a) * .02 * td * attenuate;  // uniform scale density + alpha blend in contribution
         } 
         
         td += .015;
-        t += max(d * .08 * max(min(lDist,d),2.), .01);  // trying to optimize step size
+        currentDist += max(dist * .08 * max(dist, 2.), .01);  // trying to optimize step size
     }
-    //return model;
-    //return vec4(sum.rgb, 1.);
 
     sum.rgb = pow(sum.rgb, vec3(1.2));
 
-    float bl = 1. - smoothstep(dot(rd, vec3(0,0,-1)), 1., .98);
-    bl = max(bl, .5);
-    //sum.a *= bl;
-    // sum = mix(model, sum, sum.a);
-    // sum.a = 1.;
-
-    //return vec4(vec3(bl), 1.);
- 
-    // simple scattering
-    //sum *= 1. / exp(lDist*.2)*.9;
-    //sum = clamp(sum, 0., 1.);   
-    //sum.xyz *= sum.xyz*(3.-sum.xyz-sum.xyz);
     return sum;
 }
 
