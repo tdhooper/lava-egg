@@ -154,6 +154,7 @@ const drawScene = regl({
       resolution: function(context, props) {
         return [context.viewportWidth, context.viewportHeight];
       },
+      time: regl.context('time'),
       iChannel0: texture,
       volumeId: () => {
         return [state.x, state.y, state.z, state.w];

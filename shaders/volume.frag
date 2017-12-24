@@ -2,6 +2,7 @@ precision mediump float;
 
 uniform sampler2D backfaceDistances;
 uniform vec2 resolution;
+uniform float time;
 uniform vec3 cameraPosition;
 uniform mat4 modelInverse;
 uniform sampler2D iChannel0;
@@ -12,7 +13,7 @@ varying vec3 vPosition;
 varying vec3 vNormal;
 
 #pragma glslify: volumeRay = require(./lib/volume-ray.glsl)
-#pragma glslify: renderVolume = require(./lib/render-volume.glsl, iChannel0=iChannel0)
+#pragma glslify: renderVolume = require(./lib/render-volume.glsl, iChannel0=iChannel0, time=time)
 
 void main () {
     vec2 uv = gl_FragCoord.xy / resolution;

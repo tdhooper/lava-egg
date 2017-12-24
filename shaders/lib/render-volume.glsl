@@ -28,6 +28,7 @@ float pn(in vec3 x) {
 const float nudge = 20.;    // size of perpendicular vector
 float normalizer = 1.0 / sqrt(1.0 + nudge*nudge);   // pythagorean theorem on that perpendicular to maintain scale
 float SpiralNoiseC(vec3 p, vec4 id) {
+    p.z -= time;
     float iter = 2., n = 2.-id.x; // noise amount
     for (int i = 0; i < SPIRAL_NOISE_ITER; i++) {
         // add sin and cos scaled inverse with the frequency
