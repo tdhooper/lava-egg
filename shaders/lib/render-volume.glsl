@@ -3,6 +3,14 @@ void pR(inout vec2 p, float a) {
     p = cos(a)*p + sin(a)*vec2(p.y, -p.x);
 }
 
+float pModMirror1(inout float p, float size) {
+    float halfsize = size*0.5;
+    float c = floor((p + halfsize)/size);
+    p = mod(p + halfsize,size) - halfsize;
+    p *= mod(c, 2.0) * 2. - 1.;
+    return c;
+}
+
 
 
 #define SPIRAL_NOISE_ITER 5
@@ -19,6 +27,8 @@ float pn(in vec3 x) {
     return 2.4*mix(rg.x, rg.y, f.z)-1.;
 }
 
+#define PI 3.14159265359
+
 //-------------------------------------------------------------------------------------
 // otaviogood's noise from https://www.shadertoy.com/view/ld2SzK
 //--------------------------------------------------------------
@@ -28,17 +38,26 @@ float pn(in vec3 x) {
 const float nudge = 20.;    // size of perpendicular vector
 float normalizer = 1.0 / sqrt(1.0 + nudge*nudge);   // pythagorean theorem on that perpendicular to maintain scale
 float SpiralNoiseC(vec3 p, vec4 id) {
-    p.z -= time;
+
+    float repeatSize = 3.;
+    p.z -= mod(time / 3., 1.) * 2. * repeatSize;
+    pModMirror1(p.z, repeatSize);
+
+    float warp = mod(time / 3., 1.) * PI * 2.;
+
     float iter = 2., n = 2.-id.x; // noise amount
+
     for (int i = 0; i < SPIRAL_NOISE_ITER; i++) {
         // add sin and cos scaled inverse with the frequency
-        n += -abs(sin(p.y*iter) + cos(p.x*iter)) / iter;    // abs for a ridged look
+        n += -abs(sin(p.y*iter+warp) + cos(p.x*iter+warp)) / iter;    // abs for a ridged look
+        // n += -abs(sin(p.y*iter) + cos(p.x*iter)) / iter;    // abs for a ridged look
         // rotate by adding perpendicular and scaling down
         p.xy += vec2(p.y, -p.x) * nudge;
         p.xy *= normalizer;
         // rotate on other axis
         p.xz += vec2(p.z, -p.x) * nudge;
-        p.xz *= normalizer;  
+        p.xz *= normalizer;
+
         // increase the frequency
         iter *= id.y + .733733;
     }
@@ -53,6 +72,7 @@ float mapVolume(vec3 p, vec4 id, float scale, vec3 offset) {
     float surfaceAmp = .12;
     float surfaceFeq = 8.5;
     float surfaceNoise = pn(p * surfaceFeq) * surfaceAmp;
+    surfaceNoise = 0.;
     float d = k*(.5 + SpiralNoiseC(p.zxy*.4132+333., id)*3. + surfaceNoise);
     return d / scale;
 }

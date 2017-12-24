@@ -23,7 +23,7 @@ const regl = require('regl')({
 const camera = require('canvas-orbit-camera')(canvas)
 window.addEventListener('resize', fit(canvas), false)
 
-camera.distance = 2;
+camera.distance = 1.5;
 
 // const mesh = icosphere(0);
 // const mesh = bunny;
@@ -112,8 +112,11 @@ const setupScene = regl({
         0.01,
         1000),
     model: (context) => {
-      quat.fromEuler(rotation, 0, context.tick* .5, 0);
-      vec3.set(translation, 0, Math.sin(context.tick * .025) * .1, 0);
+      var angle = context.tick * .5;
+      var offset = Math.sin(context.tick * .025) * .1;
+      // angle = offset = 0;
+      quat.fromEuler(rotation, 0, angle, 0);
+      vec3.set(translation, 0, offset, 0);
       return mat4.fromRotationTranslation(model, rotation, translation);
     },
     view: () => camera.view(),
