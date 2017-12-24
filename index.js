@@ -13,6 +13,7 @@ const fit = require('canvas-fit')
 const normals = require('angle-normals');
 const icosphere = require('icosphere');
 const box = require('geo-3d-box');
+const dat = require('dat.gui').default;
 
 const canvas = document.body.appendChild(document.createElement('canvas'))
 const regl = require('regl')({
@@ -50,6 +51,39 @@ const modelInverse = mat4.create();
 const modelView = mat4.create();
 const cameraPosition = vec3.create();
 const normal = mat3.create();
+
+var state = {
+  x: .5,
+  y: .7,
+  z: .2,
+  w: .9,
+  scale: 1,
+  offsetX: 0,
+  offsetY: 0,
+  offsetZ: 0
+};
+
+var stateConfig = [
+  [state, 'x', -2, 2],
+  [state, 'y', 0, 1],
+  [state, 'z', -2, 2],
+  [state, 'w', -2, 2],
+  [state, 'scale', 0, 20],
+  [state, 'offsetX', -10, 10],
+  [state, 'offsetY', -10, 10],
+  [state, 'offsetZ', -10, 10]
+];
+
+var gui = new dat.GUI();
+stateConfig.forEach(conf => {
+  var key = conf[1];
+  state[key] = parseFloat(sessionStorage.getItem(key)) || state[key];
+  var controller = gui.add.apply(gui, conf);
+  controller.onChange((value) => {
+    sessionStorage.setItem(key, value);
+  });
+});
+
 
 const backfaceDistances = regl.framebuffer({
   width: window.outerWidth,
@@ -118,7 +152,16 @@ const drawScene = regl({
       resolution: function(context, props) {
         return [context.viewportWidth, context.viewportHeight];
       },
-      iChannel0: texture
+      iChannel0: texture,
+      volumeId: () => {
+        return [state.x, state.y, state.z, state.w];
+      },
+      volumeScale: () => {
+        return state.scale;
+      },
+      volumeOffset: () => {
+        return [state.offsetX, state.offsetY, state.offsetZ];
+      }
     }
 });
 

@@ -44,33 +44,16 @@ float SpiralNoiseC(vec3 p, vec4 id) {
     return n;
 }
 
-float mapVolume(vec3 p, vec4 id) {
+float mapVolume(vec3 p, vec4 id, float scale, vec3 offset) {
     //p += iGlobalTime;
-
-    p *= 4.;
-
-    pR(p.yz, -.5);
-    pR(p.xz, .3);
-    
-   // p *= mix(.5, 1., sin(iGlobalTime) * .5 + .5);
-    //p += vec3(6., 7., 6.) * iGlobalTime * .2;
-    p += 1000.;
-    //p.xy -= mousee * 20.;
-    
-    p.xy -= (vec2(0.4446096695045556, 0.4677165305520606) - .5) * 20.;
-    p.y += .1;
-    p.x -= .2;
-    //p.z += .3;
-    //p.xy -= (vec2(0.6328301654671723, 0.17047622090294248) - .5) * 20.;
-    //p *= 2.;
-    //float limit = dot(normalize(p), vec3(0,0,1)) - 2.;
+    p *= scale;
+    p += offset;
     float k = 2.*id.w +.1; //  p/=k;
     float surfaceAmp = .12;
     float surfaceFeq = 8.5;
     float surfaceNoise = pn(p * surfaceFeq) * surfaceAmp;
     float d = k*(.5 + SpiralNoiseC(p.zxy*.4132+333., id)*3. + surfaceNoise);
-    return d / 4.;
-    //return max(d, -limit);
+    return d / scale;
 }
 
 
@@ -122,7 +105,14 @@ float cubicPulse( float c, float w, float x )
 //-------------------------------------------------------------------------------------
 // Based on "Type 2 Supernova" by Duke (https://www.shadertoy.com/view/lsyXDK) 
 //-------------------------------------------------------------------------------------
-vec4 renderSuperstructure(vec3 ro, vec3 rd, float maxDist, const vec4 id) {
+vec4 renderSuperstructure(
+    vec3 ro,
+    vec3 rd,
+    float maxDist,
+    const vec4 id,
+    float scale,
+    vec3 offset
+) {
 
     float td = 0.;
     float dist;
@@ -142,7 +132,7 @@ vec4 renderSuperstructure(vec3 ro, vec3 rd, float maxDist, const vec4 id) {
 
         vec3 pos = ro + currentDist * rd;
 
-        dist = abs(mapVolume(pos, id)) + .07;
+        dist = abs(mapVolume(pos, id, scale, offset)) + .07;
 
         // Fade out light towards back
         attenuate = smoothstep(maxDist, 0., currentDist);
@@ -160,7 +150,7 @@ vec4 renderSuperstructure(vec3 ro, vec3 rd, float maxDist, const vec4 id) {
         currentDist += max(dist * .08 * max(dist, 2.), .01);  // trying to optimize step size
     }
 
-    sum.rgb = pow(sum.rgb, vec3(1.2));
+    sum.rgb = pow(sum.rgb * 5., vec3(1.2));
 
     return sum;
 }
@@ -169,10 +159,20 @@ vec4 renderSuperstructure(vec3 ro, vec3 rd, float maxDist, const vec4 id) {
 vec4 renderVolume(
     vec3 rayOrigin,
     vec3 rayDirection,
-    float maxDistance
+    float maxDistance,
+    vec4 id,
+    float scale,
+    vec3 offset
 ) {
-    vec4 id = vec4(0.5,0.7,0.2,0.9);
-    return renderSuperstructure(rayOrigin, rayDirection, maxDistance, id);
+    //vec4 id = vec4(0.5,0.7,0.2,0.9);
+    return renderSuperstructure(
+        rayOrigin,
+        rayDirection,
+        maxDistance,
+        id,
+        scale,
+        offset
+    );
 }
 
 #pragma glslify: export(renderVolume)

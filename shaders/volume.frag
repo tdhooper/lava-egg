@@ -5,6 +5,9 @@ uniform vec2 resolution;
 uniform vec3 cameraPosition;
 uniform mat4 modelInverse;
 uniform sampler2D iChannel0;
+uniform vec4 volumeId;
+uniform float volumeScale;
+uniform vec3 volumeOffset;
 varying vec3 vPosition;
 varying vec3 vNormal;
 
@@ -29,8 +32,14 @@ void main () {
         maxDistance
     );
 
-    vec3 color = renderVolume(rayOrigin, rayDirection, maxDistance).rgb;
-    color = color.rbg * 5.;
+    vec3 color = renderVolume(
+        rayOrigin,
+        rayDirection,
+        maxDistance,
+        volumeId,
+        volumeScale,
+        volumeOffset
+    ).rgb;
 
     vec3 light = normalize(vec3(-1, 1, .25));
     float highlight = max(0., dot(light, vNormal) * .5);
