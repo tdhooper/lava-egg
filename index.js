@@ -53,15 +53,17 @@ const cameraPosition = vec3.create();
 const normal = mat3.create();
 
 var state = {
-  x: .5,
-  y: .7,
-  z: .2,
-  w: .9,
-  scale: 1,
-  offsetX: 0,
-  offsetY: 0,
-  offsetZ: 0
+  "x": 0.4360552819080308,
+  "y": 0.4681254562093587,
+  "z": 0.13260342040847917,
+  "w": 1.3864259876694898,
+  "scale": 7.845249816689416,
+  "offsetX": 2.830530398467765,
+  "offsetY": 0.6630171020423958,
+  "offsetZ": 0.6630171020423958
 };
+
+window.state = state;
 
 var stateConfig = [
   [state, 'x', -2, 2],
