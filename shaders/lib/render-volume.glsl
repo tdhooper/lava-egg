@@ -11,6 +11,12 @@ float pModMirror1(inout float p, float size) {
     return c;
 }
 
+vec3 pMod3(inout vec3 p, vec3 size) {
+    vec3 c = floor((p + size*0.5)/size);
+    p = mod(p + size*0.5, size) - size*0.5;
+    return c;
+}
+
 
 
 #define SPIRAL_NOISE_ITER 5
@@ -39,13 +45,19 @@ const float nudge = 20.;    // size of perpendicular vector
 float normalizer = 1.0 / sqrt(1.0 + nudge*nudge);   // pythagorean theorem on that perpendicular to maintain scale
 float SpiralNoiseC(vec3 p, vec4 id) {
 
+    vec3 pp = p;
+    pMod3(p, vec3(.4));
+    float dots = length(p) + .2;
+    p = pp;
+
     float repeatSize = 3.;
-    p.z -= mod(time / 3., 1.) * 2. * repeatSize;
+    p.z -= mod(time / 4., 1.) * 2. * repeatSize;
     pModMirror1(p.z, repeatSize);
 
-    float warp = mod(time / 3., 1.) * PI * 2.;
+    float warp = mod(time / 4., 1.) * PI * 2.;
 
     float iter = 2., n = 2.-id.x; // noise amount
+
 
     for (int i = 0; i < SPIRAL_NOISE_ITER; i++) {
         // add sin and cos scaled inverse with the frequency
@@ -61,13 +73,15 @@ float SpiralNoiseC(vec3 p, vec4 id) {
         // increase the frequency
         iter *= id.y + .733733;
     }
-    return n;
+
+    return mix(dots, n, .25);
 }
 
 float mapVolume(vec3 p, vec4 id, float scale, vec3 offset) {
     //p += iGlobalTime;
     p *= scale;
     p += offset;
+
     float k = 2.*id.w +.1; //  p/=k;
     float surfaceAmp = .12;
     float surfaceFeq = 8.5;
@@ -144,6 +158,7 @@ vec4 renderSuperstructure(
     vec3 pos;
     vec3 lightColor = vec3(.2,.5,1.);
     vec4 sum = vec4(0);
+    float lightDist = 0.;
     
     currentDist = 0.;
 
@@ -157,6 +172,16 @@ vec4 renderSuperstructure(
 
         // Fade out light towards back
         attenuate = smoothstep(maxDist, 0., currentDist);
+
+
+        float st = smoothstep(-1., 1., pos.y);
+        // attenuate = mix(0., attenuate, 1.-st) * 2.;
+
+        lightColor = mix(
+            vec3(0,1,1),
+            vec3(1,0,1),
+            1. - st
+        );
 
         sum.rgb += attenuate * lightColor * .024;
         sum.a += .02;

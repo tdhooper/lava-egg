@@ -69,7 +69,7 @@ var stateConfig = [
   [state, 'x', -2, 2],
   [state, 'y', 0, 1],
   [state, 'z', -2, 2],
-  [state, 'w', -2, 2],
+  [state, 'w', 0, 10],
   [state, 'scale', 0, 20],
   [state, 'offsetX', -10, 10],
   [state, 'offsetY', -10, 10],
