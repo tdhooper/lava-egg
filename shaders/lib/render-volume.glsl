@@ -46,15 +46,16 @@ float normalizer = 1.0 / sqrt(1.0 + nudge*nudge);   // pythagorean theorem on th
 float SpiralNoiseC(vec3 p, vec4 id) {
 
     vec3 pp = p;
-    pMod3(p, vec3(.4));
-    float dots = length(p) + .2;
+    pMod3(p, vec3(.8));
+    float dots = length(p);
     p = pp;
 
-    float repeatSize = 3.;
+    float repeatSize = 6.;
     p.z -= mod(time / 4., 1.) * 2. * repeatSize;
     pModMirror1(p.z, repeatSize);
 
     float warp = mod(time / 4., 1.) * PI * 2.;
+    warp = 0.;
 
     float iter = 2., n = 2.-id.x; // noise amount
 
@@ -73,8 +74,9 @@ float SpiralNoiseC(vec3 p, vec4 id) {
         // increase the frequency
         iter *= id.y + .733733;
     }
+    // return n;
 
-    return mix(dots, n, .25);
+    return mix(dots, n, .33);
 }
 
 float mapVolume(vec3 p, vec4 id, float scale, vec3 offset) {
@@ -178,9 +180,9 @@ vec4 renderSuperstructure(
         // attenuate = mix(0., attenuate, 1.-st) * 2.;
 
         lightColor = mix(
-            vec3(0,1,1),
-            vec3(1,0,1),
-            1. - st
+            vec3(0,1,1) * .5,
+            vec3(1,0,1) * .25,
+            st
         );
 
         sum.rgb += attenuate * lightColor * .024;
