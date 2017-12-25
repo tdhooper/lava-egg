@@ -14,6 +14,7 @@ const normals = require('angle-normals');
 const icosphere = require('icosphere');
 const box = require('geo-3d-box');
 const dat = require('dat.gui').default;
+ var polyhedra = require('polyhedra');
 
 const canvas = document.body.appendChild(document.createElement('canvas'))
 const regl = require('regl')({
@@ -27,8 +28,57 @@ camera.distance = 1.5;
 
 // const mesh = icosphere(0);
 // const mesh = bunny;
-// mesh.normals = normals(mesh.cells, mesh.positions);
-const mesh = box({size: 1, segments: 1});
+// const mesh = box({size: 1, segments: 1});
+
+console.log(polyhedra.platonic.Dodecahedron);
+
+var poly = polyhedra.platonic.Dodecahedron;
+
+const mesh = {
+  positions: [],
+  cells: [],
+  normals: []
+};
+
+var vert = vec3.create();
+var midpoint = vec3.create();
+
+// poly.face = [poly.face[0]];
+
+poly.face.forEach(face => {
+  var startIdx = mesh.positions.length;
+  var verts = face.map(i => poly.vertex[i]);
+  mesh.positions = mesh.positions.concat(verts);
+
+  vec3.set(midpoint, 0, 0, 0);
+  vec3.scale(
+    midpoint,
+    verts.reduce((acc, v) => {
+      vec3.set(vert, v[0], v[1], v[2]);
+      return vec3.add(midpoint, midpoint, vert);
+    }),
+    1 / (verts.length - 1)
+  );
+
+  var midpointIdx = mesh.positions.length;
+  mesh.positions.push([
+    midpoint[0], midpoint[1], midpoint[2]
+  ]);
+
+  var cells = face.map((f, i) => {
+    var a = i;
+    var b = (i + 1) % face.length;
+    return [
+      startIdx + a,
+      startIdx + b,
+      midpointIdx
+    ];
+  });
+  mesh.cells = mesh.cells.concat(cells);
+});
+
+mesh.normals = normals(mesh.cells, mesh.positions);
+
 
 var texture = regl.texture();
 
