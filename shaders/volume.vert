@@ -11,7 +11,7 @@ varying vec3 vPosition;
 varying vec3 vNormal;
 
 void main () {
-    vPosition = (instance * model * vec4(position, 1)).xyz;
+    vPosition = (model * instance * vec4(position, 1)).xyz;
     vNormal = normalize(normalMatrix * normal);
-    gl_Position = proj * view * instance * model * vec4(position, 1);
+    gl_Position = proj * view * model * instance * vec4(position, 1);
 }

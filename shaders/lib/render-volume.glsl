@@ -46,13 +46,13 @@ float normalizer = 1.0 / sqrt(1.0 + nudge*nudge);   // pythagorean theorem on th
 float SpiralNoiseC(vec3 p, vec4 id) {
 
     vec3 pp = p;
-    pMod3(p, vec3(.8));
+    pMod3(p, vec3(.8 * dotScale));
     float dots = length(p);
     p = pp;
 
     float repeatSize = 6.;
-    p.z -= mod(time / 4., 1.) * 2. * repeatSize;
-    pModMirror1(p.z, repeatSize);
+    p.x -= mod(time / 4., 1.) * 2. * repeatSize;
+    pModMirror1(p.x, repeatSize);
 
     float warp = mod(time / 4., 1.) * PI * 2.;
     warp = 0.;
@@ -76,7 +76,7 @@ float SpiralNoiseC(vec3 p, vec4 id) {
     }
     // return n;
 
-    return mix(dots, n, .33);
+    return mix(dots, n, 1.);
 }
 
 float mapVolume(vec3 p, vec4 id, float scale, vec3 offset) {
@@ -176,7 +176,7 @@ vec4 renderSuperstructure(
         attenuate = smoothstep(maxDist, 0., currentDist);
 
 
-        float st = smoothstep(-1., 1., pos.y);
+        float st = smoothstep(1., .0, pos.z);
         // attenuate = mix(0., attenuate, 1.-st) * 2.;
 
         lightColor = mix(
@@ -198,7 +198,7 @@ vec4 renderSuperstructure(
         currentDist += max(dist * .08 * max(dist, 2.), .01);  // trying to optimize step size
     }
 
-    sum.rgb = pow(sum.rgb * 5., vec3(1.2));
+    sum.rgb = pow(sum.rgb * 10., vec3(1.2));
 
     return sum;
 }

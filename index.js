@@ -43,7 +43,7 @@ const mesh = {
 };
 
 const sides = poly.face[0].length;
-const diameter = .4;
+const diameter = .2;
 const top = 1;
 const middle = .3;
 const bottom = 0;
@@ -79,11 +79,12 @@ for (var pointIdx = 0; pointIdx < sides; pointIdx++) {
 mesh.normals = normals(mesh.cells, mesh.positions);
 
 const instance = mat4.create();
+const instanceInverse = mat4.create();
 const origin = vec3.create();
 const midpoint = vec3.create();
 const vert = vec3.create();
 
-const instances = poly.face.map(face => {
+const instances = poly.face.map((face, idx) => {
   var verts = face.map(i => poly.vertex[i]);
 
   vec3.set(midpoint, 0, 0, 0);
@@ -100,10 +101,12 @@ const instances = poly.face.map(face => {
   vec3.normalize(midpoint, midpoint);
   vec3.cross(vert, vert, midpoint);
   vec3.normalize(vert, vert);
+  vec3.scale(origin, midpoint, -.5);
 
   mat4.targetTo(instance, origin, midpoint, vert);
   return {
-    'instance': mat4.clone(instance)
+    'instance': mat4.clone(instance),
+    'idx': idx
   };
 });
 
@@ -136,6 +139,7 @@ var state = {
   "z": 0.15261164251244486,
   "w": 0.9381268486091052,
   "scale": 13.79757682755774,
+  "dotScale": 13.79757682755774,
   "offsetX": 4.0143281572002785,
   "offsetY": -4.655725028501198,
   "offsetZ": -1.4044550838631444
@@ -148,7 +152,8 @@ var stateConfig = [
   [state, 'y', 0, 1],
   [state, 'z', -2, 2],
   [state, 'w', 0, 10],
-  [state, 'scale', 0, 20],
+  [state, 'scale', 0, 50],
+  [state, 'dotScale', 0, 2],
   [state, 'offsetX', -10, 10],
   [state, 'offsetY', -10, 10],
   [state, 'offsetZ', -10, 10]
@@ -190,9 +195,9 @@ const setupScene = regl({
         0.01,
         1000),
     model: (context) => {
-      var angle = context.tick * .5;
+      var angle = context.tick * .25;
       var offset = Math.sin(context.tick * .025) * .1;
-      angle = offset = 0;
+      // angle = offset = 0;
       quat.fromEuler(rotation, 0, angle, 0);
       vec3.set(translation, 0, offset, 0);
       return mat4.fromRotationTranslation(model, rotation, translation);
@@ -204,8 +209,12 @@ const setupScene = regl({
     model: regl.context('model'),
     view: regl.context('view'),
     instance: regl.prop('instance'),
+    instanceIndex: regl.prop('idx'),
     modelInverse: (context) => {
       return mat4.invert(modelInverse, context.model);
+    },
+    instanceInverse: (context, props) => {
+      return mat4.invert(instanceInverse, props.instance);
     },
     normalMatrix: (context) => {
       mat4.multiply(modelView, context.model, context.view);
@@ -246,6 +255,9 @@ const drawScene = regl({
       },
       volumeOffset: () => {
         return [state.offsetX, state.offsetY, state.offsetZ];
+      },
+      dotScale: () => {
+        return state.dotScale;
       }
     }
 });
