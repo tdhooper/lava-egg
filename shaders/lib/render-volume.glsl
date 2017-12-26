@@ -159,7 +159,7 @@ vec4 renderSuperstructure(
    
     vec3 pos;
     vec3 lightColor = vec3(.2,.5,1.);
-    vec3 fogColor = vec3(.2,0,.5);
+    vec3 fogColor = vec3(.2,0,.1);
     vec4 sum = vec4(fogColor, 0);
     float lightDist = 0.;
     

@@ -41,7 +41,7 @@ var mesh = {
   normals: []
 };
 
-const sides = poly.face[0].length * 2.;
+const sides = poly.face[0].length;
 const diameter = .4;
 const top = 1;
 const middle = .5;
@@ -135,15 +135,15 @@ const cameraPosition = vec3.create();
 const normal = mat3.create();
 
 var state = {
-  "x": -0.9311450057002397,
-  "y": 0.09381268486091052,
-  "z": 0.15261164251244486,
-  "w": 0.9381268486091052,
-  "scale": 13.79757682755774,
-  "dotScale": 13.79757682755774,
-  "offsetX": 4.0143281572002785,
-  "offsetY": -4.655725028501198,
-  "offsetZ": -1.4044550838631444
+  "x": -0.9544870495247815,
+  "y": 0.17467770576178984,
+  "z": -0.8244362517392594,
+  "w": 1.421650063154093,
+  "scale": 10.901398584514862,
+  "dotScale": 2,
+  "offsetX": -10,
+  "offsetY": 5.848379904860401,
+  "offsetZ": -5.205937906908982
 };
 
 window.state = state;
@@ -198,7 +198,7 @@ const setupScene = regl({
     model: (context, props) => {
       var angle = context.tick * .5;
       var offset = Math.sin(context.tick * .025) * .1;
-      // angle = offset = 0;
+      angle = offset = 0;
       quat.fromEuler(rotation, 0, angle, 0);
       vec3.set(translation, 0, offset, 0);
       mat4.fromRotationTranslation(model, rotation, translation);
@@ -282,7 +282,7 @@ regl.frame(() => {
     framebuffer: backfaceDistances
   });
   regl.clear({
-    color: [48/255,24/255,87/255,1],
+    color: [33/255,9/255,40/255,1],
     depth: 1,
     stencil: 0
   });
