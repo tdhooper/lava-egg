@@ -26,7 +26,6 @@ window.addEventListener('resize', fit(canvas), false)
 
 camera.distance = 1.5;
 
-// const mesh = icosphere(0);
 // const mesh = bunny;
 // const mesh = box({size: 1, segments: 1});
 
@@ -36,16 +35,16 @@ var poly = polyhedra.platonic.Dodecahedron;
 // var poly = polyhedra.platonic.Tetrahedron;
 
 console.log(poly);
-const mesh = {
+var mesh = {
   positions: [],
   cells: [],
   normals: []
 };
 
-const sides = poly.face[0].length;
-const diameter = .2;
+const sides = poly.face[0].length * 2.;
+const diameter = .4;
 const top = 1;
-const middle = .3;
+const middle = .5;
 const bottom = 0;
 
 var adj = .25 + (.5 / sides);
@@ -75,6 +74,8 @@ for (var pointIdx = 0; pointIdx < sides; pointIdx++) {
   mesh.positions.push([0, 0, bottom]);
   mesh.cells.push([start + 3, start + 4, start + 5]);
 }
+
+// mesh = icosphere(3);
 
 mesh.normals = normals(mesh.cells, mesh.positions);
 
@@ -194,13 +195,15 @@ const setupScene = regl({
         viewportWidth / viewportHeight,
         0.01,
         1000),
-    model: (context) => {
-      var angle = context.tick * .25;
+    model: (context, props) => {
+      var angle = context.tick * .5;
       var offset = Math.sin(context.tick * .025) * .1;
       // angle = offset = 0;
       quat.fromEuler(rotation, 0, angle, 0);
       vec3.set(translation, 0, offset, 0);
-      return mat4.fromRotationTranslation(model, rotation, translation);
+      mat4.fromRotationTranslation(model, rotation, translation);
+      return mat4.multiply(model, model, props.instance);
+      return model;
     },
     view: () => camera.view(),
   },
@@ -208,17 +211,12 @@ const setupScene = regl({
     proj: regl.context('proj'),
     model: regl.context('model'),
     view: regl.context('view'),
-    instance: regl.prop('instance'),
     instanceIndex: regl.prop('idx'),
     modelInverse: (context) => {
       return mat4.invert(modelInverse, context.model);
     },
-    instanceInverse: (context, props) => {
-      return mat4.invert(instanceInverse, props.instance);
-    },
     normalMatrix: (context) => {
-      mat4.multiply(modelView, context.model, context.view);
-      mat3.fromMat4(normal, modelView);
+      mat3.fromMat4(normal, context.model);
       mat3.invert(normal, normal);
       mat3.transpose(normal, normal);
       return normal;
@@ -239,10 +237,24 @@ const drawBackfaces = regl({
 });
 
 const drawScene = regl({
+  // blend: {
+  //   enable: true,
+  //   func: {
+  //     srcRGB: 'src alpha',
+  //     srcAlpha: 1,
+  //     dstRGB: 'one minus src alpha',
+  //     dstAlpha: 1
+  //   },
+  //   equation: {
+  //     rgb: 'add',
+  //     alpha: 'add'
+  //   },
+  //   // color: [0, 0, 0, 0]
+  // },
   frag: glslify('./shaders/volume.frag'),
     uniforms: {
       backfaceDistances: backfaceDistances,
-      resolution: function(context, props) {
+      resolution: function(context) {
         return [context.viewportWidth, context.viewportHeight];
       },
       time: regl.context('time'),
@@ -270,7 +282,7 @@ regl.frame(() => {
     framebuffer: backfaceDistances
   });
   regl.clear({
-    color: [0, 0, 0, 1],
+    color: [48/255,24/255,87/255,1],
     depth: 1,
     stencil: 0
   });

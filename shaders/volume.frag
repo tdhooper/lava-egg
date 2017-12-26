@@ -4,7 +4,6 @@ uniform sampler2D backfaceDistances;
 uniform vec2 resolution;
 uniform float time;
 uniform vec3 cameraPosition;
-uniform mat4 instanceInverse;
 uniform mat4 modelInverse;
 uniform sampler2D iChannel0;
 uniform vec4 volumeId;
@@ -27,7 +26,7 @@ void main () {
     float maxDistance;
 
     volumeRay(
-        instanceInverse * modelInverse,
+        modelInverse,
         vPosition,
         cameraPosition,
         backfaceDistance,
@@ -38,20 +37,37 @@ void main () {
 
     vec3 offset = volumeOffset + vec3(0, instanceIndex * 100., 0);
 
-    vec3 color = renderVolume(
+    vec4 volume = renderVolume(
         rayOrigin,
         rayDirection,
         maxDistance,
         volumeId,
         volumeScale,
         offset
-    ).rgb;
+    );
+    // volume *= 5.;
+    volume = min(volume, vec4(1));
 
-    vec3 light = normalize(vec3(-1, 1, .25));
-    float highlight = max(0., dot(light, vNormal) * .5);
-    // color += highlight;
 
-    gl_FragColor = vec4(color, 1);
+
+    vec3 lightPosition = vec3(-1, 1, .25);
+    float diffuse = max(0., dot(vNormal, lightPosition));
+
+    vec3 albedo = vec3(.5,0,.5);
+    vec3 lightCol = vec3(.6,1,1);
+    albedo += lightCol * diffuse;
+
+    vec4 color = volume;
+    color = mix(volume, vec4(lightCol, 1), diffuse * .5);
+
+    // color = mix(color, albedo, .5) + color;
+    // color = albedo;
+
+    // color = vNormal * .5 + .5;
+    // color = min(color, vec3(1));
+
+    // gl_FragColor = vec4(color.rgb, 1.);
+    gl_FragColor = color;
 
     // gl_FragColor = vec4(vec3(maxDist / 2.), 1);
 }

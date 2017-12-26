@@ -159,14 +159,15 @@ vec4 renderSuperstructure(
    
     vec3 pos;
     vec3 lightColor = vec3(.2,.5,1.);
-    vec4 sum = vec4(0);
+    vec3 fogColor = vec3(.2,0,.5);
+    vec4 sum = vec4(fogColor, 0);
     float lightDist = 0.;
     
     currentDist = 0.;
 
     for (int i = 0; i < 200; i++) {
 
-        if (sum.a > .99 || currentDist > maxDist) break;
+        if (currentDist > maxDist) break;
 
         vec3 pos = ro + currentDist * rd;
 
@@ -185,20 +186,23 @@ vec4 renderSuperstructure(
             st
         );
 
-        sum.rgb += attenuate * lightColor * .024;
-        sum.a += .02;
+        sum.rgb += mix(lightColor, fogColor, 1. - attenuate) * .15;
+        // sum.a += .5;
+        // sum.a = min(sum.a, 1.);
 
         if (dist < thickness) {
             td += (1. - td) * (thickness - dist) + .005;  // accumulate density
-            sum.rgb += sum.a * sum.rgb * .1;  // emission
+            sum.rgb += sum.rgb * vec3(0,.01,0);  // emission
             sum += (1. - sum.a) * .02 * td * attenuate;  // uniform scale density + alpha blend in contribution
         } 
         
         td += .015;
-        currentDist += max(dist * .08 * max(dist, 2.), .01);  // trying to optimize step size
+        currentDist += dist * .05 * max(dist, 2.);  // trying to optimize step size
     }
 
-    sum.rgb = pow(sum.rgb * 10., vec3(1.2));
+    sum.a = 1.;
+
+    // sum.rgb = pow(sum.rgb * 10., vec3(1.2));
 
     return sum;
 }
