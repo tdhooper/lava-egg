@@ -30,54 +30,82 @@ camera.distance = 1.5;
 // const mesh = bunny;
 // const mesh = box({size: 1, segments: 1});
 
-console.log(polyhedra.platonic.Dodecahedron);
-
 var poly = polyhedra.platonic.Dodecahedron;
+// var poly = polyhedra.platonic.Cube;
+// var poly = polyhedra.platonic.Icosahedron;
+// var poly = polyhedra.platonic.Tetrahedron;
 
+console.log(poly);
 const mesh = {
   positions: [],
   cells: [],
   normals: []
 };
 
-var vert = vec3.create();
-var midpoint = vec3.create();
+const sides = poly.face[0].length;
+const diameter = .4;
+const top = 1;
+const middle = .3;
+const bottom = 0;
 
-// poly.face = [poly.face[0]];
+var adj = .25 + (.5 / sides);
 
-poly.face.forEach(face => {
-  var startIdx = mesh.positions.length;
+for (var pointIdx = 0; pointIdx < sides; pointIdx++) {
+  var pointIdxA = pointIdx;
+  var pointIdxB = (pointIdx + 1) % sides;
+  var angleA = (pointIdxA / sides) + adj;
+  var angleB = (pointIdxB / sides) + adj;
+  var pointA = [
+    Math.sin(angleA * Math.PI * 2) * diameter,
+    Math.cos(angleA * Math.PI * 2) * diameter
+  ];
+  var pointB = [
+    Math.sin(angleB * Math.PI * 2) * diameter,
+    Math.cos(angleB * Math.PI * 2) * diameter
+  ];
+  var start = mesh.positions.length;
+
+  mesh.positions.push([pointB[0], pointB[1], middle]);
+  mesh.positions.push([pointA[0], pointA[1], middle]);
+  mesh.positions.push([0, 0, top]);
+  mesh.cells.push([start, start + 1, start + 2]);
+
+  mesh.positions.push([pointA[0], pointA[1], middle]);
+  mesh.positions.push([pointB[0], pointB[1], middle]);
+  mesh.positions.push([0, 0, bottom]);
+  mesh.cells.push([start + 3, start + 4, start + 5]);
+}
+
+mesh.normals = normals(mesh.cells, mesh.positions);
+
+const instance = mat4.create();
+const origin = vec3.create();
+const midpoint = vec3.create();
+const vert = vec3.create();
+
+const instances = poly.face.map(face => {
   var verts = face.map(i => poly.vertex[i]);
-  mesh.positions = mesh.positions.concat(verts);
 
   vec3.set(midpoint, 0, 0, 0);
   vec3.scale(
     midpoint,
     verts.reduce((acc, v) => {
       vec3.set(vert, v[0], v[1], v[2]);
-      return vec3.add(midpoint, midpoint, vert);
+      vec3.add(midpoint, acc, vert);
+      return midpoint;
     }),
-    1 / (verts.length - 1)
+    1 / verts.length
   );
 
-  var midpointIdx = mesh.positions.length;
-  mesh.positions.push([
-    midpoint[0], midpoint[1], midpoint[2]
-  ]);
+  vec3.normalize(midpoint, midpoint);
+  vec3.cross(vert, vert, midpoint);
+  vec3.normalize(vert, vert);
 
-  var cells = face.map((f, i) => {
-    var a = i;
-    var b = (i + 1) % face.length;
-    return [
-      startIdx + a,
-      startIdx + b,
-      midpointIdx
-    ];
-  });
-  mesh.cells = mesh.cells.concat(cells);
+  mat4.targetTo(instance, origin, midpoint, vert);
+  return {
+    'instance': mat4.clone(instance)
+  };
 });
-
-mesh.normals = normals(mesh.cells, mesh.positions);
 
 
 var texture = regl.texture();
@@ -164,7 +192,7 @@ const setupScene = regl({
     model: (context) => {
       var angle = context.tick * .5;
       var offset = Math.sin(context.tick * .025) * .1;
-      // angle = offset = 0;
+      angle = offset = 0;
       quat.fromEuler(rotation, 0, angle, 0);
       vec3.set(translation, 0, offset, 0);
       return mat4.fromRotationTranslation(model, rotation, translation);
@@ -175,6 +203,7 @@ const setupScene = regl({
     proj: regl.context('proj'),
     model: regl.context('model'),
     view: regl.context('view'),
+    instance: regl.prop('instance'),
     modelInverse: (context) => {
       return mat4.invert(modelInverse, context.model);
     },
@@ -234,7 +263,7 @@ regl.frame(() => {
     stencil: 0
   });
   camera.tick();
-  setupScene(() => {
+  setupScene(instances, () => {
     drawBackfaces();
     drawScene();
   });
