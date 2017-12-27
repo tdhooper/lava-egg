@@ -14,7 +14,8 @@ const normals = require('angle-normals');
 const icosphere = require('icosphere');
 const box = require('geo-3d-box');
 const dat = require('dat.gui').default;
- var polyhedra = require('polyhedra');
+const polyhedra = require('polyhedra');
+const Bezier = require('bezier-js');
 
 const canvas = document.body.appendChild(document.createElement('canvas'))
 const regl = require('regl')({
@@ -41,39 +42,93 @@ var mesh = {
   normals: []
 };
 
-const sides = poly.face[0].length;
-const diameter = .4;
-const top = 1;
-const middle = .5;
-const bottom = 0;
+// const sides = poly.face[0].length;
+// const diameter = .4;
+// const top = 1;
+// const middle = .5;
+// const bottom = 0;
 
-var adj = .25 + (.5 / sides);
+// var adj = .25 + (.5 / sides);
 
-for (var pointIdx = 0; pointIdx < sides; pointIdx++) {
-  var pointIdxA = pointIdx;
-  var pointIdxB = (pointIdx + 1) % sides;
-  var angleA = (pointIdxA / sides) + adj;
-  var angleB = (pointIdxB / sides) + adj;
-  var pointA = [
-    Math.sin(angleA * Math.PI * 2) * diameter,
-    Math.cos(angleA * Math.PI * 2) * diameter
-  ];
-  var pointB = [
-    Math.sin(angleB * Math.PI * 2) * diameter,
-    Math.cos(angleB * Math.PI * 2) * diameter
-  ];
-  var start = mesh.positions.length;
+// for (var pointIdx = 0; pointIdx < sides; pointIdx++) {
+//   var pointIdxA = pointIdx;
+//   var pointIdxB = (pointIdx + 1) % sides;
+//   var angleA = (pointIdxA / sides) + adj;
+//   var angleB = (pointIdxB / sides) + adj;
+//   var pointA = [
+//     Math.sin(angleA * Math.PI * 2) * diameter,
+//     Math.cos(angleA * Math.PI * 2) * diameter
+//   ];
+//   var pointB = [
+//     Math.sin(angleB * Math.PI * 2) * diameter,
+//     Math.cos(angleB * Math.PI * 2) * diameter
+//   ];
+//   var start = mesh.positions.length;
 
-  mesh.positions.push([pointB[0], pointB[1], middle]);
-  mesh.positions.push([pointA[0], pointA[1], middle]);
-  mesh.positions.push([0, 0, top]);
-  mesh.cells.push([start, start + 1, start + 2]);
+//   mesh.positions.push([pointB[0], pointB[1], middle]);
+//   mesh.positions.push([pointA[0], pointA[1], middle]);
+//   mesh.positions.push([0, 0, top]);
+//   mesh.cells.push([start, start + 1, start + 2]);
 
-  mesh.positions.push([pointA[0], pointA[1], middle]);
-  mesh.positions.push([pointB[0], pointB[1], middle]);
-  mesh.positions.push([0, 0, bottom]);
-  mesh.cells.push([start + 3, start + 4, start + 5]);
+//   mesh.positions.push([pointA[0], pointA[1], middle]);
+//   mesh.positions.push([pointB[0], pointB[1], middle]);
+//   mesh.positions.push([0, 0, bottom]);
+//   mesh.cells.push([start + 3, start + 4, start + 5]);
+// }
+
+const sides = 20;
+var lut = [[0,0], [.5,.5], [0,1]];
+
+var width = .3;
+var bump = .3;
+var round = .15;
+var curveA = new Bezier(
+  0, 0,
+  round, 0,
+  width, bump - round,
+  width, bump
+);
+var curveB = new Bezier(
+  width, bump,
+  width, bump + round,
+  round, 1,
+  0, 1
+);
+var lut = curveA.getLUT(10);
+lut = lut.concat(curveB.getLUT(10));
+console.log(lut);
+
+// const vec1 = vec3.create();
+// const vec2 = vec3.create();
+// const vec3 = vec3.create();
+// const vec4 = vec3.create();
+
+for (var u = 0; u < sides; u++) {
+  for (var v = 0; v < lut.length - 1; v++) {
+    var uA = u;
+    var uB = (u + 1) % sides;
+    var angleA = (uA / sides) * Math.PI * 2;
+    var angleB = (uB / sides) * Math.PI * 2;
+    var uAX = Math.sin(angleA);
+    var uAY = Math.cos(angleA);
+    var uBX = Math.sin(angleB);
+    var uBY = Math.cos(angleB);
+    var lutA = lut[v];
+    var lutB = lut[v + 1];
+    var topA = [uAX * lutA.x, uAY * lutA.x, lutA.y];
+    var topB = [uBX * lutA.x, uBY * lutA.x, lutA.y];
+    var botA = [uAX * lutB.x, uAY * lutB.x, lutB.y];
+    var botB = [uBX * lutB.x, uBY * lutB.x, lutB.y];
+    var start = mesh.positions.length;
+    mesh.positions.push(topA);
+    mesh.positions.push(topB);
+    mesh.positions.push(botA);
+    mesh.positions.push(botB);
+    mesh.cells.push([start + 0, start + 3, start + 1]);
+    mesh.cells.push([start + 3, start + 0, start + 2]);
+  }
 }
+
 
 // mesh = icosphere(3);
 
@@ -197,12 +252,13 @@ const setupScene = regl({
         1000),
     model: (context, props) => {
       var angle = context.tick * .5;
-      var offset = Math.sin(context.tick * .025) * .1;
+      var offset = Math.sin(context.tick * .05 + props.idx * 1.75) * .1;
       angle = offset = 0;
-      quat.fromEuler(rotation, 0, angle, 0);
-      vec3.set(translation, 0, offset, 0);
+      angle = 0;
+      quat.fromEuler(rotation, 0, 0, angle);
+      vec3.set(translation, 0,0,offset);
       mat4.fromRotationTranslation(model, rotation, translation);
-      return mat4.multiply(model, model, props.instance);
+      return mat4.multiply(model, props.instance, model);
       return model;
     },
     view: () => camera.view(),
