@@ -76,8 +76,7 @@ var mesh = {
 //   mesh.cells.push([start + 3, start + 4, start + 5]);
 // }
 
-const sides = 20;
-var lut = [[0,0], [.5,.5], [0,1]];
+const sides = 10;
 
 var width = .3;
 var bump = .3;
@@ -95,7 +94,10 @@ var curveB = new Bezier(
   0, 1
 );
 var lut = curveA.getLUT(10);
-lut = lut.concat(curveB.getLUT(10));
+lut = lut.concat(curveB.getLUT(10).slice(1));
+
+// lut = [{x: 0, y: 0}, {x: .5, y: .5}, {x: 0, y:1}];
+
 console.log(lut);
 
 // const vec1 = vec3.create();
@@ -104,31 +106,61 @@ console.log(lut);
 // const vec4 = vec3.create();
 
 for (var u = 0; u < sides; u++) {
-  for (var v = 0; v < lut.length - 1; v++) {
-    var uA = u;
-    var uB = (u + 1) % sides;
-    var angleA = (uA / sides) * Math.PI * 2;
-    var angleB = (uB / sides) * Math.PI * 2;
-    var uAX = Math.sin(angleA);
-    var uAY = Math.cos(angleA);
-    var uBX = Math.sin(angleB);
-    var uBY = Math.cos(angleB);
-    var lutA = lut[v];
-    var lutB = lut[v + 1];
-    var topA = [uAX * lutA.x, uAY * lutA.x, lutA.y];
-    var topB = [uBX * lutA.x, uBY * lutA.x, lutA.y];
-    var botA = [uAX * lutB.x, uAY * lutB.x, lutB.y];
-    var botB = [uBX * lutB.x, uBY * lutB.x, lutB.y];
-    var start = mesh.positions.length;
-    mesh.positions.push(topA);
-    mesh.positions.push(topB);
-    mesh.positions.push(botA);
-    mesh.positions.push(botB);
-    mesh.cells.push([start + 0, start + 3, start + 1]);
-    mesh.cells.push([start + 3, start + 0, start + 2]);
+  for (var v = 0; v < lut.length; v++) {
+    var angleA = (u / sides) * Math.PI * 2;
+    var x = Math.sin(angleA);
+    var y = Math.cos(angleA);
+    var l = lut[v];
+    mesh.positions.push([
+      x * l.x,
+      y * l.x,
+      l.y
+    ]);
   }
 }
 
+for (var u = 0; u < sides; u++) {
+  for (var v = 0; v < lut.length - 1; v++) {
+    var cols = sides;
+    var rows = lut.length;
+    // var uA = u;
+    // var uB = (u + 1) % sides;
+    // var angleA = (uA / sides) * Math.PI * 2;
+    // var angleB = (uB / sides) * Math.PI * 2;
+    // var uAX = Math.sin(angleA);
+    // var uAY = Math.cos(angleA);
+    // var uBX = Math.sin(angleB);
+    // var uBY = Math.cos(angleB);
+    // var lutA = lut[v];
+    // var lutB = lut[v + 1];
+    // var topA = [uAX * lutA.x, uAY * lutA.x, lutA.y];
+    // var topB = [uBX * lutA.x, uBY * lutA.x, lutA.y];
+    // var botA = [uAX * lutB.x, uAY * lutB.x, lutB.y];
+    // var botB = [uBX * lutB.x, uBY * lutB.x, lutB.y];
+    // var start = mesh.positions.length;
+    // mesh.positions.push(topA);
+    // mesh.positions.push(topB);
+    // mesh.positions.push(botA);
+    // mesh.positions.push(botB);
+    // mesh.cells.push([start + 0, start + 3, start + 1]);
+    // mesh.cells.push([start + 3, start + 0, start + 2]);
+
+    mesh.cells.push([
+      u * rows + v,
+      ((u + 1) % cols) * rows + v + 1,
+      ((u + 1) % cols) * rows + v
+    ]);
+    mesh.cells.push([
+      u * rows + v,
+      u * rows + v + 1,
+      ((u + 1) % cols) * rows + v + 1
+    ]);
+    // mesh.cells.push([start + 3, start + 0, start + 2]);
+
+  }
+}
+
+console.log(mesh);
 
 // mesh = icosphere(3);
 
