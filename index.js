@@ -156,39 +156,6 @@ console.log(mesh);
 
 mesh.normals = normals(mesh.cells, mesh.positions);
 
-const instance = mat4.create();
-const instanceInverse = mat4.create();
-const origin = vec3.create();
-const midpoint = vec3.create();
-const vert = vec3.create();
-
-const instances = poly.face.map((face, idx) => {
-  var verts = face.map(i => poly.vertex[i]);
-
-  vec3.set(midpoint, 0, 0, 0);
-  vec3.scale(
-    midpoint,
-    verts.reduce((acc, v) => {
-      vec3.set(vert, v[0], v[1], v[2]);
-      vec3.add(midpoint, acc, vert);
-      return midpoint;
-    }),
-    1 / verts.length
-  );
-
-  vec3.normalize(midpoint, midpoint);
-  vec3.cross(vert, vert, midpoint);
-  vec3.normalize(vert, vert);
-  vec3.scale(origin, midpoint, -.45);
-
-  mat4.targetTo(instance, origin, midpoint, vert);
-  return {
-    'instance': mat4.clone(instance),
-    'idx': idx
-  };
-});
-
-
 var texture = regl.texture();
 
 var image = new Image();
@@ -277,14 +244,14 @@ const setupScene = regl({
         0.01,
         1000),
     model: (context, props) => {
-      var angle = context.tick * .5;
-      var offset = Math.sin(context.tick * .05 + props.idx * 1.75) * .1;
-      angle = offset = 0;
-      angle = 0;
+      var angle = context.tick * 3;
+      var offset = Math.sin(context.tick * .05) * .1;
+      // angle = offset = 0;
+      // angle = 0;
+      offset = 0;
       quat.fromEuler(rotation, 0, 0, angle);
       vec3.set(translation, 0,0,offset);
       mat4.fromRotationTranslation(model, rotation, translation);
-      return mat4.multiply(model, props.instance, model);
       return model;
     },
     view: () => camera.view(),
@@ -293,7 +260,6 @@ const setupScene = regl({
     proj: regl.context('proj'),
     model: regl.context('model'),
     view: regl.context('view'),
-    instanceIndex: regl.prop('idx'),
     modelInverse: (context) => {
       return mat4.invert(modelInverse, context.model);
     },
@@ -372,7 +338,7 @@ regl.frame(() => {
     stencil: 0
   });
   camera.tick();
-  setupScene(instances, () => {
+  setupScene(() => {
     drawBackfaces();
     drawScene();
   });

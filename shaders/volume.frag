@@ -37,7 +37,7 @@ void main () {
         maxDistance
     );
 
-    vec3 offset = volumeOffset + vec3(0, instanceIndex * 100., 0);
+    vec3 offset = volumeOffset + vec3(0, 0, 0);
 
     vec4 volume = renderVolume(
         rayOrigin,
