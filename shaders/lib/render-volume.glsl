@@ -157,13 +157,16 @@ vec4 renderSuperstructure(
     float attenuate;
     float thickness = .05 + .25 * id.z;
    
+    vec3 base = vec3(.1,0,.2) * .8;
     vec3 pos;
     vec3 lightColor = vec3(.2,.5,1.);
-    vec3 fogColor = vec3(.2,0,.1);
-    vec4 sum = vec4(fogColor, 0);
+    vec3 fogColor = vec3(.8,0,.3);
+    vec4 sum = vec4(base, 0);
     float lightDist = 0.;
     
     currentDist = 0.;
+
+    sum.rgb = mix(base, fogColor, pow(maxDist * .5, 2.));
 
     for (int i = 0; i < 200; i++) {
 
@@ -186,9 +189,13 @@ vec4 renderSuperstructure(
             st
         );
 
-        sum.rgb += mix(lightColor, fogColor, 1. - attenuate) * .15;
+
+        // sum.rgb += mix(lightColor, fogColor, 1. - attenuate) * .5;
+        sum.rgb += lightColor * attenuate * brightness;
+
         // sum.a += .5;
         // sum.a = min(sum.a, 1.);
+        // sum.rgb += fogColor * .25;
 
         if (dist < thickness) {
             td += (1. - td) * (thickness - dist) + .005;  // accumulate density

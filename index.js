@@ -20,12 +20,15 @@ const Bezier = require('bezier-js');
 const canvas = document.body.appendChild(document.createElement('canvas'))
 const regl = require('regl')({
   extensions: ['OES_texture_float'],
-  canvas: canvas
+  canvas: canvas,
+  attributes: {
+    antialias: false
+  }
 });
 const camera = require('canvas-orbit-camera')(canvas)
 window.addEventListener('resize', fit(canvas), false)
 
-camera.distance = 1.5;
+camera.distance = 2.5;
 
 // const mesh = bunny;
 // const mesh = box({size: 1, segments: 1});
@@ -77,7 +80,7 @@ var mesh = {
 // }
 
 var width = .3;
-var bump = .3;
+var bump = .75;
 var round = .15;
 var curveA = new Bezier(
   0, 0,
@@ -91,8 +94,8 @@ var curveB = new Bezier(
   round, 1,
   0, 1
 );
-var lut = curveA.getLUT(10);
-lut = lut.concat(curveB.getLUT(20).slice(1));
+var lut = curveA.getLUT(20);
+lut = lut.concat(curveB.getLUT(10).slice(1));
 
 // lut = [{x: 0, y: 0}, {x: .5, y: .5}, {x: 0, y:1}];
 
@@ -176,7 +179,7 @@ const instances = poly.face.map((face, idx) => {
   vec3.normalize(midpoint, midpoint);
   vec3.cross(vert, vert, midpoint);
   vec3.normalize(vert, vert);
-  vec3.scale(origin, midpoint, -.5);
+  vec3.scale(origin, midpoint, -.45);
 
   mat4.targetTo(instance, origin, midpoint, vert);
   return {
@@ -213,8 +216,9 @@ var state = {
   "y": 0.17467770576178984,
   "z": -0.8244362517392594,
   "w": 1.421650063154093,
+  "brightness": 0.15,
   "scale": 10.901398584514862,
-  "dotScale": 2,
+  "dotScale": 0,
   "offsetX": -10,
   "offsetY": 5.848379904860401,
   "offsetZ": -5.205937906908982
@@ -226,9 +230,9 @@ var stateConfig = [
   [state, 'x', -2, 2],
   [state, 'y', 0, 1],
   [state, 'z', -2, 2],
-  [state, 'w', 0, 10],
+  [state, 'w', 0, 3],
+  [state, 'brightness', 0, 1],
   [state, 'scale', 0, 50],
-  [state, 'dotScale', 0, 2],
   [state, 'offsetX', -10, 10],
   [state, 'offsetY', -10, 10],
   [state, 'offsetZ', -10, 10]
@@ -237,7 +241,8 @@ var stateConfig = [
 var gui = new dat.GUI();
 stateConfig.forEach(conf => {
   var key = conf[1];
-  state[key] = parseFloat(sessionStorage.getItem(key)) || state[key];
+  var value = sessionStorage.getItem(key);
+  state[key] = value !== null ? parseFloat(value) : state[key];
   var controller = gui.add.apply(gui, conf);
   controller.onChange((value) => {
     sessionStorage.setItem(key, value);
@@ -246,8 +251,10 @@ stateConfig.forEach(conf => {
 
 
 const backfaceDistances = regl.framebuffer({
-  width: window.outerWidth,
-  height: window.outerHeight,
+  width: Math.floor(window.outerWidth * window.devicePixelRatio),
+  height: Math.floor(window.outerHeight * window.devicePixelRatio),
+  // width: window.outerWidth,
+  // height: window.outerHeight,
   colorType: 'float'
 });
 
@@ -345,6 +352,9 @@ const drawScene = regl({
       },
       dotScale: () => {
         return state.dotScale;
+      },
+      brightness: () => {
+        return state.brightness;
       }
     }
 });
