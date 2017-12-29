@@ -97,6 +97,7 @@ var stateConfig = [
 ];
 
 var gui = new dat.GUI();
+gui.closed = true;
 stateConfig.forEach(conf => {
   var key = conf[1];
   var value = sessionStorage.getItem(key);
@@ -197,7 +198,6 @@ const drawBase = regl({
   frag: glslify('./shaders/base.frag'),
 });
 
-
 var scene = Node();
 
 var lamp = Node({
@@ -210,16 +210,30 @@ var lamp = Node({
 });
 scene.add(lamp);
 
-var sphere = icosphere(2);
+var sphere = icosphere(3);
 sphere.normals = normals(sphere.cells, sphere.positions);
 
-var base = Node({
-  position: [.5, 0, 0],
-  scale: [.1, .1, .1],
-  mesh: sphere,
-  draw: drawBase
-});
-scene.add(base);
+var numBase = 5;
+var baseRadius = .18;
+var baseSize = .12;
+
+scene.add(
+  Array.apply(null, Array(numBase)).map((a, i) => {
+    var rot = quat.create();
+    quat.fromEuler(rot, -20, (i / numBase) * 360, 0);
+    return Node({
+      position: [
+        Math.sin(Math.PI * 2 * (i / numBase)) * baseRadius,
+        -.3,
+        Math.cos(Math.PI * 2 * (i / numBase)) * baseRadius
+      ],
+      rotation: rot,
+      scale: [.1, .2, .15],
+      mesh: sphere,
+      draw: drawBase
+    });
+  })
+);
 
 regl.frame((context) => {
   regl.clear({
@@ -233,10 +247,11 @@ regl.frame((context) => {
     depth: 1,
     stencil: 0
   });
+  scene.setEuler(0, context.time, 0);
   camera.tick();
-  scene.setEuler(0, context.time * 2, 0);
   scene.tick();
-  setupScene(scene.flat(), (context, props) => {
+  var nodes = scene.flat();
+  setupScene(nodes, (context, props) => {
     props.data.draw();
   })
 })
