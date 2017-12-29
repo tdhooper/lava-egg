@@ -51,8 +51,8 @@ float SpiralNoiseC(vec3 p, vec4 id) {
     p = pp;
 
     float repeatSize = 6.;
-    p.x -= mod(time / 4., 1.) * 2. * repeatSize;
-    pModMirror1(p.x, repeatSize);
+    p.z -= mod(time / 4., 1.) * 2. * repeatSize;
+    pModMirror1(p.z, repeatSize);
 
     float warp = mod(time / 4., 1.) * PI * 2.;
     warp = 0.;
@@ -180,7 +180,7 @@ vec4 renderSuperstructure(
         attenuate = smoothstep(maxDist, 0., currentDist);
 
 
-        float st = smoothstep(1., .0, pos.z);
+        float st = smoothstep(0., 1., pos.y);
         // attenuate = mix(0., attenuate, 1.-st) * 2.;
 
         lightColor = mix(
@@ -223,6 +223,7 @@ vec4 renderVolume(
     float scale,
     vec3 offset
 ) {
+    // return vec4(rayOrigin, 1);
     //vec4 id = vec4(0.5,0.7,0.2,0.9);
     return renderSuperstructure(
         rayOrigin,

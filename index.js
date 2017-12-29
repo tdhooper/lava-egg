@@ -8,16 +8,17 @@ const mat4 = glm.mat4;
 const mat3 = glm.mat3;
 const vec3 = glm.vec3;
 const quat = glm.quat;
-const bunny = require('bunny')
 const fit = require('canvas-fit')
 const normals = require('angle-normals');
 const icosphere = require('icosphere');
-const box = require('geo-3d-box');
 const dat = require('dat.gui').default;
 const polyhedra = require('polyhedra');
 const Bezier = require('bezier-js');
+const revolveMesh = require('./revolve-mesh');
 
 const canvas = document.body.appendChild(document.createElement('canvas'))
+const camera = require('./canvas-turntable-camera')(canvas);
+
 const regl = require('regl')({
   extensions: ['OES_texture_float'],
   canvas: canvas,
@@ -25,62 +26,16 @@ const regl = require('regl')({
     antialias: false
   }
 });
-const camera = require('canvas-orbit-camera')(canvas)
+
 window.addEventListener('resize', fit(canvas), false)
-
-camera.distance = 2.5;
-
-// const mesh = bunny;
-// const mesh = box({size: 1, segments: 1});
 
 var poly = polyhedra.platonic.Dodecahedron;
 // var poly = polyhedra.platonic.Cube;
 // var poly = polyhedra.platonic.Icosahedron;
 // var poly = polyhedra.platonic.Tetrahedron;
 
-console.log(poly);
-var mesh = {
-  positions: [],
-  cells: [],
-  normals: []
-};
-
-// const sides = poly.face[0].length;
-// const diameter = .4;
-// const top = 1;
-// const middle = .5;
-// const bottom = 0;
-
-// var adj = .25 + (.5 / sides);
-
-// for (var pointIdx = 0; pointIdx < sides; pointIdx++) {
-//   var pointIdxA = pointIdx;
-//   var pointIdxB = (pointIdx + 1) % sides;
-//   var angleA = (pointIdxA / sides) + adj;
-//   var angleB = (pointIdxB / sides) + adj;
-//   var pointA = [
-//     Math.sin(angleA * Math.PI * 2) * diameter,
-//     Math.cos(angleA * Math.PI * 2) * diameter
-//   ];
-//   var pointB = [
-//     Math.sin(angleB * Math.PI * 2) * diameter,
-//     Math.cos(angleB * Math.PI * 2) * diameter
-//   ];
-//   var start = mesh.positions.length;
-
-//   mesh.positions.push([pointB[0], pointB[1], middle]);
-//   mesh.positions.push([pointA[0], pointA[1], middle]);
-//   mesh.positions.push([0, 0, top]);
-//   mesh.cells.push([start, start + 1, start + 2]);
-
-//   mesh.positions.push([pointA[0], pointA[1], middle]);
-//   mesh.positions.push([pointB[0], pointB[1], middle]);
-//   mesh.positions.push([0, 0, bottom]);
-//   mesh.cells.push([start + 3, start + 4, start + 5]);
-// }
-
 var width = .3;
-var bump = .75;
+var bump = .25;
 var round = .15;
 var curveA = new Bezier(
   0, 0,
@@ -94,66 +49,9 @@ var curveB = new Bezier(
   round, 1,
   0, 1
 );
-var lut = curveA.getLUT(20);
-lut = lut.concat(curveB.getLUT(10).slice(1));
-
-// lut = [{x: 0, y: 0}, {x: .5, y: .5}, {x: 0, y:1}];
-
-var cols = 20;
-var rows = lut.length;
-
-for (var u = 0; u < cols; u++) {
-  for (var v = 0; v < rows; v++) {
-    if (v == 0) { continue; }
-    if (v == rows - 1) { continue; }
-    var angleA = (u / cols) * Math.PI * 2;
-    var x = Math.sin(angleA);
-    var y = Math.cos(angleA);
-    var l = lut[v];
-    mesh.positions.push([
-      x * l.x,
-      y * l.x,
-      l.y
-    ]);
-  }
-}
-
-mesh.positions.push([0, 0, 0]);
-mesh.positions.push([0, 0, 1]);
-
-rows -= 2;
-
-for (var u = 0; u < cols; u++) {
-  for (var v = 0; v < rows - 1; v++) {
-    var a = u * rows + v;
-    var b = ((u + 1) % cols) * rows + v;
-    var c = u * rows + v + 1;
-    var d = ((u + 1) % cols) * rows + v + 1;
-    mesh.cells.push([a, d, b]);
-    mesh.cells.push([a, c, d]);
-  }
-}
-
-var end = mesh.positions.length - 1;
-
-for (var u = 0; u < cols; u++) {
-  mesh.cells.push([
-    end - 1,
-    u * rows,
-    ((u + 1) % cols) * rows
-  ]);
-  mesh.cells.push([
-    end,
-    ((u + 1) % cols) * rows + rows - 1,
-    u * rows + rows - 1
-  ]);
-}
-
-
-console.log(mesh);
-
-// mesh = icosphere(3);
-
+var lut = curveA.getLUT(10);
+lut = lut.concat(curveB.getLUT(20).slice(1));
+var mesh = revolveMesh(lut, 40);
 mesh.normals = normals(mesh.cells, mesh.positions);
 
 var texture = regl.texture();
@@ -244,14 +142,15 @@ const setupScene = regl({
         0.01,
         1000),
     model: (context, props) => {
-      var angle = context.tick * 3;
+      var angle = context.tick * 2;
       var offset = Math.sin(context.tick * .05) * .1;
       // angle = offset = 0;
       // angle = 0;
       offset = 0;
-      quat.fromEuler(rotation, 0, 0, angle);
-      vec3.set(translation, 0,0,offset);
+      quat.fromEuler(rotation, 0, angle, 0);
+      vec3.set(translation, 0,-.5,0);
       mat4.fromRotationTranslation(model, rotation, translation);
+      // mat4.fromTranslation(model, camera.position);
       return model;
     },
     view: () => camera.view(),
@@ -269,10 +168,8 @@ const setupScene = regl({
       mat3.transpose(normal, normal);
       return normal;
     },
-    cameraPosition: () => {
-      vec3.set(cameraPosition, 0, 0, camera.distance);
-      vec3.transformQuat(cameraPosition, cameraPosition, camera.rotation);
-      return cameraPosition;
+    cameraPosition: (context) => {
+      return camera.position;
     },
     tick: regl.context('tick')
   },
