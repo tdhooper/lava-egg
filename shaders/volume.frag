@@ -16,6 +16,8 @@ varying vec3 vPosition;
 varying vec3 vNormal;
 varying float depth;
 
+#pragma glslify: lambert = require(glsl-diffuse-lambert)
+#pragma glslify: phong = require(glsl-specular-gaussian)
 #pragma glslify: volumeRay = require(./lib/volume-ray.glsl)
 #pragma glslify: renderVolume = require(./lib/render-volume.glsl, iChannel0=iChannel0, time=time, dotScale=dotScale, brightness=brightness)
 
@@ -50,30 +52,17 @@ void main () {
     // volume *= 5.;
     volume = min(volume, vec4(1));
 
+    vec3 normal = normalize(vNormal);
 
+    vec3 lightPosition = vec3(-1, 1, .25)* 10.;
+    vec3 lightDirection = normalize(lightPosition - vPosition);
+    vec3 eyeDirection = normalize(cameraPosition - vPosition);
 
-    vec3 lightPosition = vec3(-1, 1, .25);
-    float diffuse = abs(dot(vNormal, lightPosition));
-    diffuse = pow(diffuse, 2.) * .25;
+    float diffuse = lambert(lightDirection, normal);
+    float specular = phong(lightDirection, eyeDirection, normal, .2);
 
-    vec4 lightCol = vec4(.6, .5, 1, 1);
+    vec3 light = vec3(.6, .5, 1) * .3;
+    vec3 color = volume.rgb + light * (diffuse + specular);
 
-    vec4 color = volume;
-    // color = mix(volume, vec4(lightCol, 1), diffuse * .5);
-    color = pow(color + lightCol * diffuse, vec4(1. + diffuse));
-
-    // color = mix(color, albedo, .5) + color;
-    // color = albedo;
-
-    // color = vNormal * .5 + .5;
-    // color = min(color, vec3(1));
-
-    color.rgb = mix(color.rgb, vec3(33./255.,9./255.,40./255.), depth);
-
-    // gl_FragColor = vec4(vec3(), 1);
-
-    // gl_FragColor = vec4(color.rgb, 1.);
-    gl_FragColor = color;
-
-    // gl_FragColor = vec4(vec3(maxDist / 2.), 1);
+    gl_FragColor = vec4(color,1);
 }
