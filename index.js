@@ -35,9 +35,9 @@ window.addEventListener('resize', fit(canvas), false)
 // var poly = polyhedra.platonic.Icosahedron;
 // var poly = polyhedra.platonic.Tetrahedron;
 
-var width = .3;
-var bump = .25;
-var round = .15;
+var width = .35;
+var bump = .35;
+var round = .2;
 var curveA = new Bezier(
   0, 0,
   round, 0,
@@ -215,7 +215,6 @@ sphere.normals = normals(sphere.cells, sphere.positions);
 
 var numBase = 5;
 var baseRadius = .18;
-var baseSize = .12;
 
 scene.add(
   Array.apply(null, Array(numBase)).map((a, i) => {
@@ -224,11 +223,11 @@ scene.add(
     return Node({
       position: [
         Math.sin(Math.PI * 2 * (i / numBase)) * baseRadius,
-        -.3,
+        -.32,
         Math.cos(Math.PI * 2 * (i / numBase)) * baseRadius
       ],
       rotation: rot,
-      scale: [.1, .2, .15],
+      scale: [.1, .2, .16],
       mesh: sphere,
       draw: drawBase
     });
