@@ -72,8 +72,8 @@ function attachCamera(canvas, opts) {
     var width = canvas.width
 
     if (opts.rotate && mbut.left && !ctrl && !alt) {
-      camera.theta += Math.PI * 2 * ((mpos.x - mpos.prevX) / width);
-      camera.phi += Math.PI * ((mpos.y - mpos.prevY) / height);
+      camera.theta -= Math.PI * 2 * ((mpos[0] - mpos.prev[0]) / width);
+      camera.phi -= Math.PI * ((mpos[1] - mpos.prev[1]) / height);
       // camera.phi %= Math.PI;
       camera.phi = Math.min(Math.max(0.0001, camera.phi), Math.PI);
     }
