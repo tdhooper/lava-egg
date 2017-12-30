@@ -242,7 +242,7 @@ regl.frame((context) => {
     framebuffer: backfaceDistances
   });
   regl.clear({
-    color: [33/255,9/255,40/255,1],
+    color: [25/255,10/255,40/255,1],
     depth: 1,
     stencil: 0
   });

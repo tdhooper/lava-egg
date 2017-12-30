@@ -16,10 +16,10 @@ varying vec3 vPosition;
 varying vec3 vNormal;
 varying float depth;
 
-#pragma glslify: lambert = require(glsl-diffuse-lambert)
-#pragma glslify: phong = require(glsl-specular-gaussian)
 #pragma glslify: volumeRay = require(./lib/volume-ray.glsl)
 #pragma glslify: renderVolume = require(./lib/render-volume.glsl, iChannel0=iChannel0, time=time, dotScale=dotScale, brightness=brightness)
+#pragma glslify: sceneLighting = require(./lib/scene-lighting.glsl, vNormal=vNormal, cameraPosition=cameraPosition, vPosition=vPosition)
+
 
 void main () {
     vec2 uv = gl_FragCoord.xy / resolution;
@@ -49,20 +49,10 @@ void main () {
         volumeScale,
         offset
     );
-    // volume *= 5.;
+
     volume = min(volume, vec4(1));
 
-    vec3 normal = normalize(vNormal);
-
-    vec3 lightPosition = vec3(-1, 1, .25)* 10.;
-    vec3 lightDirection = normalize(lightPosition - vPosition);
-    vec3 eyeDirection = normalize(cameraPosition - vPosition);
-
-    float diffuse = lambert(lightDirection, normal);
-    float specular = phong(lightDirection, eyeDirection, normal, .2);
-
-    vec3 light = vec3(.6, .5, 1) * .3;
-    vec3 color = volume.rgb + light * (diffuse + specular);
+    vec3 color = volume.rgb + sceneLighting(.2);
 
     gl_FragColor = vec4(color,1);
 }
