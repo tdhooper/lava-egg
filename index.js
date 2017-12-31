@@ -16,9 +16,12 @@ const polyhedra = require('polyhedra');
 const Bezier = require('bezier-js');
 const revolveMesh = require('./revolve-mesh');
 const Node = require('scene-tree');
+const WebCaptureClient = require('./web-capture');
 
 const canvas = document.body.appendChild(document.createElement('canvas'))
 const camera = require('./canvas-turntable-camera')(canvas);
+
+camera.distance = .8;
 
 const regl = require('regl')({
   extensions: ['OES_texture_float'],
@@ -50,9 +53,9 @@ var curveB = new Bezier(
   round, 1,
   0, 1
 );
-var lut = curveA.getLUT(10);
+var lut = curveA.getLUT(20);
 lut = lut.concat(curveB.getLUT(20).slice(1));
-var mesh = revolveMesh(lut, 40);
+var mesh = revolveMesh(lut, 60);
 mesh.normals = normals(mesh.cells, mesh.positions);
 
 var texture = regl.texture();
@@ -79,8 +82,20 @@ var state = {
   "dotScale": 0,
   "offsetX": -10,
   "offsetY": 5.848379904860401,
-  "offsetZ": -5.205937906908982
+  "offsetZ": -5.205937906908982,
+  "loop": true,
+  "loopDuration": 4,
+  "loopSize": 6
 };
+
+try {
+  var savedState = sessionStorage.getItem('savedState');
+  if (savedState) {
+    state = Object.assign(state, JSON.parse(savedState));
+  }
+} catch(e) {
+  // ignore
+}
 
 window.state = state;
 
@@ -93,31 +108,36 @@ var stateConfig = [
   [state, 'scale', 0, 50],
   [state, 'offsetX', -10, 10],
   [state, 'offsetY', -10, 10],
-  [state, 'offsetZ', -10, 10]
+  [state, 'offsetZ', -10, 10],
+  [state, 'loop'],
+  [state, 'loopDuration', 0, 20],
+  [state, 'loopSize', 0, 20]
 ];
 
 var gui = new dat.GUI();
 gui.closed = true;
+
 stateConfig.forEach(conf => {
   var key = conf[1];
-  var value = sessionStorage.getItem(key);
-  state[key] = value !== null ? parseFloat(value) : state[key];
   var controller = gui.add.apply(gui, conf);
   controller.onChange((value) => {
-    sessionStorage.setItem(key, value);
+    var savedState = JSON.stringify(state);
+    sessionStorage.setItem('savedState', savedState);
   });
 });
 
 
 const backfaceDistances = regl.framebuffer({
-  width: Math.floor(window.outerWidth * window.devicePixelRatio),
-  height: Math.floor(window.outerHeight * window.devicePixelRatio),
-  // width: window.outerWidth,
-  // height: window.outerHeight,
   colorType: 'float'
 });
 
 const modelInverse = mat4.create();
+
+const setupSeconds = regl({
+  context: {
+    seconds: regl.prop('seconds')
+  }
+});
 
 const setupScene = regl({
   cull: {
@@ -174,7 +194,7 @@ const drawLamp = regl({
     resolution: function(context) {
       return [context.viewportWidth, context.viewportHeight];
     },
-    time: regl.context('time'),
+    time: regl.context('seconds'),
     iChannel0: texture,
     volumeId: () => {
       return [state.x, state.y, state.z, state.w];
@@ -190,6 +210,15 @@ const drawLamp = regl({
     },
     brightness: () => {
       return state.brightness;
+    },
+    loop: () => {
+      return state.loop;
+    },
+    loopDuration: () => {
+      return state.loopDuration;
+    },
+    loopSize: () => {
+      return state.loopSize;
     }
   }
 });
@@ -198,7 +227,9 @@ const drawBase = regl({
   frag: glslify('./shaders/base.frag'),
 });
 
-var scene = Node();
+var scene = Node({
+  position: [0, .05, 0]
+});
 
 var lamp = Node({
   position: [0, -.5, 0],
@@ -234,7 +265,7 @@ scene.add(
   })
 );
 
-regl.frame((context) => {
+var draw = function(seconds) {
   regl.clear({
     color: [0, 0, 0, 1],
     depth: 1,
@@ -246,11 +277,63 @@ regl.frame((context) => {
     depth: 1,
     stencil: 0
   });
-  scene.setEuler(0, context.time, 0);
+  scene.setEuler(0, Math.PI * 2 * seconds / state.loopDuration, 0);
   camera.tick();
   scene.tick();
   var nodes = scene.flat();
-  setupScene(nodes, (context, props) => {
-    props.data.draw();
-  })
-})
+  setupSeconds({
+    seconds: seconds
+  }, () => {
+    setupScene(nodes, (context, props) => {
+      props.data.draw();
+    });
+  });
+};
+
+var tick;
+
+var startTick = () => {
+  tick = regl.frame((context) => {
+    draw(context.time);
+  });
+}
+
+var stopTick = () => {
+  tick.cancel();
+}
+
+startTick();
+
+var originalState;
+
+var captureSetup = function(config) {
+  stopTick();
+  originalState = Object.assign({}, state);
+  state.loopDuration = config.seconds;
+  canvas.width = config.width;
+  canvas.height = config.height;
+};
+
+var captureTeardown = function() {
+  state = originalState;
+  startTick();
+};
+
+var captureRender = function(milliseconds) {
+  draw(milliseconds / 1000);
+};
+
+var captureConfig = {
+  fps: 30,
+  seconds: state.loopDuration,
+  width: 1200,
+  height: 1200
+};
+
+var webCapture = new WebCaptureClient(
+  canvas,
+  captureSetup,
+  captureTeardown,
+  captureRender,
+  captureConfig
+);

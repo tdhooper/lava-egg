@@ -50,9 +50,12 @@ float SpiralNoiseC(vec3 p, vec4 id) {
     float dots = length(p);
     p = pp;
 
-    float repeatSize = 6.;
-    p.z -= mod(time / 4., 1.) * 2. * repeatSize;
-    pModMirror1(p.z, repeatSize);
+    if (loop) {
+        p.z -= mod(time / loopDuration, 1.) * 2. * loopSize;
+        pModMirror1(p.z, loopSize);
+    } else {
+        p.z -= (time / loopDuration) * 2. * loopSize;
+    }
 
     float warp = mod(time / 4., 1.) * PI * 2.;
     warp = 0.;
@@ -79,7 +82,7 @@ float SpiralNoiseC(vec3 p, vec4 id) {
     return mix(dots, n, 1.);
 }
 
-float mapVolume(vec3 p, vec4 id, float scale, vec3 offset) {
+float mapVolume(vec3 p, vec4 id, vec3 offset) {
     //p += iGlobalTime;
     p *= scale;
     p += offset;
@@ -147,7 +150,6 @@ vec4 renderSuperstructure(
     vec3 rd,
     float maxDist,
     const vec4 id,
-    float scale,
     vec3 offset
 ) {
 
@@ -174,7 +176,7 @@ vec4 renderSuperstructure(
 
         vec3 pos = ro + currentDist * rd;
 
-        dist = abs(mapVolume(pos, id, scale, offset)) + .07;
+        dist = abs(mapVolume(pos, id, offset)) + .07;
 
         // Fade out light towards back
         attenuate = smoothstep(maxDist, 0., currentDist);
@@ -220,7 +222,6 @@ vec4 renderVolume(
     vec3 rayDirection,
     float maxDistance,
     vec4 id,
-    float scale,
     vec3 offset
 ) {
     // return vec4(rayOrigin, 1);
@@ -230,7 +231,6 @@ vec4 renderVolume(
         rayDirection,
         maxDistance,
         id,
-        scale,
         offset
     );
 }
