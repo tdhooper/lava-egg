@@ -2,6 +2,8 @@
   <p>This example shows how to implement a movable camera with regl.</p>
  */
 
+require("babel-polyfill");
+
 var glslify = require('glslify');
 const glm = require('gl-matrix');
 const mat4 = glm.mat4;
