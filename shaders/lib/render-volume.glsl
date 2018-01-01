@@ -1,4 +1,10 @@
 
+//
+// This is all based on iapafoto's Interactive thinks
+// https://www.shadertoy.com/view/Xt3SR4
+//
+
+
 void pR(inout vec2 p, float a) {
     p = cos(a)*p + sin(a)*vec2(p.y, -p.x);
 }
