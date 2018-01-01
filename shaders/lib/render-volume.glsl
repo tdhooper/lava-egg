@@ -21,18 +21,6 @@ vec3 pMod3(inout vec3 p, vec3 size) {
 
 #define SPIRAL_NOISE_ITER 5
 
-float hash( const in vec3 p ) {
-    return fract(sin(dot(p,vec3(127.1,311.7,758.5453123)))*43758.5453123);
-}
-
-float pn(in vec3 x) {
-    vec3 p = floor(x), f = fract(x);
-    f *= f*(3.-f-f);
-    vec2 uv = (p.xy+vec2(37,17)*p.z) + f.xy,
-         rg = texture2D( iChannel0, (uv+.5)/256.).yx;
-    return 2.4*mix(rg.x, rg.y, f.z)-1.;
-}
-
 #define PI 3.14159265359
 
 //-------------------------------------------------------------------------------------
@@ -88,11 +76,7 @@ float mapVolume(vec3 p, vec4 id, vec3 offset) {
     p += offset;
 
     float k = 2.*id.w +.1; //  p/=k;
-    float surfaceAmp = .12;
-    float surfaceFeq = 8.5;
-    float surfaceNoise = pn(p * surfaceFeq) * surfaceAmp;
-    surfaceNoise = 0.;
-    float d = k*(.5 + SpiralNoiseC(p.zxy*.4132, id)*3. + surfaceNoise);
+    float d = k*(.5 + SpiralNoiseC(p.zxy*.4132, id)*3.);
     return d / scale;
 }
 

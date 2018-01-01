@@ -5,7 +5,6 @@ uniform vec2 resolution;
 uniform float time;
 uniform vec3 cameraPosition;
 uniform mat4 modelInverse;
-uniform sampler2D iChannel0;
 uniform vec4 volumeId;
 uniform float volumeScale;
 uniform vec3 volumeOffset;
@@ -20,7 +19,7 @@ varying vec3 vNormal;
 varying float depth;
 
 #pragma glslify: volumeRay = require(./lib/volume-ray.glsl)
-#pragma glslify: renderVolume = require(./lib/render-volume.glsl, iChannel0=iChannel0, time=time, dotScale=dotScale, brightness=brightness, loop=loop, loopDuration=loopDuration, loopSize=loopSize, scale=volumeScale)
+#pragma glslify: renderVolume = require(./lib/render-volume.glsl, time=time, dotScale=dotScale, brightness=brightness, loop=loop, loopDuration=loopDuration, loopSize=loopSize, scale=volumeScale)
 #pragma glslify: sceneLighting = require(./lib/scene-lighting.glsl, vNormal=vNormal, cameraPosition=cameraPosition, vPosition=vPosition)
 
 

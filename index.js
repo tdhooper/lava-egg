@@ -26,7 +26,7 @@ const camera = require('./canvas-turntable-camera')(canvas);
 camera.distance = .8;
 
 const regl = require('regl')({
-  extensions: ['OES_texture_float', 'OES_texture_half_float'],
+  extensions: ['OES_texture_half_float'],
   canvas: canvas,
   attributes: {
     antialias: false
@@ -59,20 +59,6 @@ var lut = curveA.getLUT(20);
 lut = lut.concat(curveB.getLUT(20).slice(1));
 var mesh = revolveMesh(lut, 60);
 mesh.normals = normals(mesh.cells, mesh.positions);
-
-var texture = regl.texture();
-
-var image = new Image();
-image.src = '/images/noise.png';
-image.onload = function() {
-    texture({
-        data: image,
-        mag: 'linear',
-        min: 'mipmap',
-        wrapS: 'repeat',
-        wrapT: 'repeat'
-    });
-};
 
 var state = {
   "x": -0.9544870495247815,
@@ -197,7 +183,6 @@ const drawLamp = regl({
       return [context.viewportWidth, context.viewportHeight];
     },
     time: regl.context('seconds'),
-    iChannel0: texture,
     volumeId: () => {
       return [state.x, state.y, state.z, state.w];
     },
