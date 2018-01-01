@@ -26,7 +26,7 @@ const camera = require('./canvas-turntable-camera')(canvas);
 camera.distance = .8;
 
 const regl = require('regl')({
-  extensions: ['OES_texture_float'],
+  extensions: ['OES_texture_float', 'OES_texture_half_float'],
   canvas: canvas,
   attributes: {
     antialias: false
@@ -130,7 +130,7 @@ stateConfig.forEach(conf => {
 
 
 const backfaceDistances = regl.framebuffer({
-  colorType: 'float'
+  colorType: 'half float'
 });
 
 const modelInverse = mat4.create();

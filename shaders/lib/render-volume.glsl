@@ -92,7 +92,7 @@ float mapVolume(vec3 p, vec4 id, vec3 offset) {
     float surfaceFeq = 8.5;
     float surfaceNoise = pn(p * surfaceFeq) * surfaceAmp;
     surfaceNoise = 0.;
-    float d = k*(.5 + SpiralNoiseC(p.zxy*.4132+333., id)*3. + surfaceNoise);
+    float d = k*(.5 + SpiralNoiseC(p.zxy*.4132, id)*3. + surfaceNoise);
     return d / scale;
 }
 
